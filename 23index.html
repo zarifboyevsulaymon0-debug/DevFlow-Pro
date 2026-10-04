@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoPulse Pro - Crypto Rates & Converter</title>
+    
+    <!-- CSS STYLES -->
+    <style>
+        :root {
+            --bg: #090d16;
+            --panel: #111827;
+            --border: #1f2937;
+            --accent: #f59e0b;
+            --accent-hover: #d97706;
+            --text: #f9fafb;
+            --text-dim: #9ca3af;
+            --green: #10b981;
+            --red: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 30px 15px;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        header h1 {
+            color: var(--accent);
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-dim);
+            font-size: 1rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .converter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #070a12;
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent);
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .crypto-table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge-up {
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        .badge-down {
+            color: var(--red);
+            font-weight: 600;
+        }
+
+        .refresh-btn {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            float: right;
+        }
+
+        .refresh-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        @media (max-width: 600px) {
+            .refresh-btn {
+                float: none;
+                width: 100%;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🪙 CryptoPulse Pro</h1>
+        <p>Kriptovalyutalar kursi va tezkor valyuta kalkulyatori</p>
+    </header>
+
+    <div class="container">
+        
+        <!-- 1. CRYPTO CONVERTER -->
+        <div class="card">
+            <h2 style="font-size: 1.3rem; color: var(--accent);">🧮 Kripto Kalkulyator</h2>
+            <div class="converter-grid">
+                <div>
+                    <label>Miqdor:</label>
+                    <input type="number" id="cryptoAmount" value="1" min="0" oninput="calculateConversion()">
+                </div>
+                <div>
+                    <label>Kriptovalyuta:</label>
+                    <select id="cryptoSelect" onchange="calculateConversion()"></select>
+                </div>
+                <div>
+                    <label>Natija (USD):</label>
+                    <input type="text" id="convertedResult" readonly style="font-weight: bold; color: var(--green);">
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. LIVE RATES TABLE -->
+        <div class="card">
+            <div style="margin-bottom: 15px; overflow: hidden;">
+                <button class="refresh-btn" onclick="fetchCryptoData()">Yangilash 🔄</button>
+                <h2 style="font-size: 1.3rem;">📈 Bozor Narxlari</h2>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Kriptovalyuta nomini qidiring (masalan: BTC, Ethereum)..." oninput="filterTable()">
+            </div>
+
+            <div class="crypto-table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nomi</th>
+                            <th>Belgisi</th>
+                            <th>Narxi (USD)</th>
+                            <th>24s O'zgarish</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cryptoTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-dim);">Ma'lumotlar yuklanmoqda...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        let cryptoData = [];
+
+        // CoinGecko Ochiq API (Kalit talab qilmaydi)
+        const API_URL = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1&sparkline=false';
+
+        async function fetchCryptoData() {
+            const tbody = document.getElementById('cryptoTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-dim);">Yuklanmoqda...</td></tr>';
+
+            try {
+                const response = await fetch(API_URL);
+                cryptoData = await response.json();
+                renderTable(cryptoData);
+                populateSelect(cryptoData);
+                calculateConversion();
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--red);">Ma\'lumotlarni yuklashda xatolik yuz berdi! Qayta urinib ko\'ring.</td></tr>';
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('cryptoTableBody');
+            tbody.innerHTML = '';
+
+            data.forEach((coin, index) => {
+                const changeClass = coin.price_change_percentage_24h >= 0 ? 'badge-up' : 'badge-down';
+                const changeSign = coin.price_change_percentage_24h >= 0 ? '+' : '';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td style="font-weight: 600;">${coin.name}</td>
+                        <td style="color: var(--text-dim); text-transform: uppercase;">${coin.symbol}</td>
+                        <td>$${coin.current_price.toLocaleString()}</td>
+                        <td class="${changeClass}">${changeSign}${coin.price_change_percentage_24h ? coin.price_change_percentage_24h.toFixed(2) : 0}%</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function populateSelect(data) {
+            const select = document.getElementById('cryptoSelect');
+            select.innerHTML = '';
+            data.forEach(coin => {
+                select.innerHTML += `<option value="${coin.current_price}">${coin.name} (${coin.symbol.toUpperCase()})</option>`;
+            });
+        }
+
+        function calculateConversion() {
+            const amount = parseFloat(document.getElementById('cryptoAmount').value) || 0;
+            const price = parseFloat(document.getElementById('cryptoSelect').value) || 0;
+            const result = amount * price;
+
+            document.getElementById('convertedResult').value = `$${result.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        function filterTable() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = cryptoData.filter(coin => 
+                coin.name.toLowerCase().includes(query) || 
+                coin.symbol.toLowerCase().includes(query)
+            );
+            renderTable(filtered);
+        }
+
+        // Sahifa yuklanganda ma'lumotlarni olish
+        fetchCryptoData();
+    </script>
+</body>
+</html>
